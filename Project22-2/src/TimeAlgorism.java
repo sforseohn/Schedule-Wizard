@@ -35,7 +35,7 @@ public class TimeAlgorism extends JFrame {
 		int time2 = thissub.time2; 
 		temp.schedule[time1][day1] = thissub.name +"\n"+ thissub.professor;
 		temp.schedule[time2][day2] = thissub.name +"\n"+ thissub.professor;
-		temp.totalCompetition *= thissub.subCompetition;
+		//temp.totalCompetition *= thissub.subCompetition;
 		return temp;
 	}
 	
@@ -46,6 +46,7 @@ public class TimeAlgorism extends JFrame {
 		int curTime2 = thissub.time2; 
 		temp.schedule[curTime1][curDay1] = null;
 		temp.schedule[curTime2][curDay2] = null;
+		// temp.totalCompetition /= thissub.subCompetition;
 		return temp;
 	}
 	private void run() {
@@ -95,15 +96,15 @@ public class TimeAlgorism extends JFrame {
 				System.out.print("두 번째 시간의 교시를 입력하세요(ex) 1)>> ");
 				subjectList[i][j].time2 = sc.nextInt() - 1;
 
-				System.out.print(subjectList[i][j].name+"의 수강정원을 입력하세요>> ");
-				subjectList[i][j].permittednum = sc.nextInt();
-				System.out.print(subjectList[i][j].name+"의 총 담은 인원을 입력하세요>> ");
-				subjectList[i][j].totalnum = sc.nextInt();
-				if(subjectList[i][j].permittednum > subjectList[i][j].totalnum)
-					subjectList[i][j].subCompetition = 1;
-				else 
-					subjectList[i][j].subCompetition = subjectList[i][j].permittednum / (float)subjectList[i][j].totalnum;
-				professorCount[i]++; 
+				//System.out.print(subjectList[i][j].name+"의 수강정원을 입력하세요>> ");
+				//subjectList[i][j].permittednum = sc.nextInt();
+				//System.out.print(subjectList[i][j].name+"의 총 담은 인원을 입력하세요>> ");
+				//subjectList[i][j].totalnum = sc.nextInt();
+				//if(subjectList[i][j].permittednum > subjectList[i][j].totalnum)
+					//subjectList[i][j].subCompetition = 1;
+				//else 
+					//subjectList[i][j].subCompetition = subjectList[i][j].permittednum / (float)subjectList[i][j].totalnum;
+				professorCount[i]++;
 			}
 			System.out.print("과목명을 입력하세요. 그만하려면 q를 입력하세요>>");
 			subjectn = sc.next();
@@ -116,6 +117,7 @@ public class TimeAlgorism extends JFrame {
 		ScheduleList list[] = new ScheduleList[100]; // 가능한 시간표들을 저장한 배열
 		int[] stored = new int[subjectCount]; // 이전의 저장된 교수인덱스를 저장 stored[과목] = 교수
 		int storedIdx = -1;
+		int recursive = 0;
 		loop : while(true) {
 		ScheduleList temp = new ScheduleList(); // 새로운 리스트 생성
 		for (int i = 0; i < subjectCount; i++) { // 총 과목 개수마다 과목을 담음
@@ -134,6 +136,7 @@ public class TimeAlgorism extends JFrame {
 
 			    if (temp.schedule[time1][day1] == null && temp.schedule[time2][day2] == null) { // 비어있으면 저장. 저장되었을 때 실행되는 코드
 			      temp = storeInSchedule(thissub, temp);
+			      System.out.println(thissub.name+thissub.professor+" 저장!");
 			      containsSubject = true;
 			      stored[i] = j; // 이전의 저장된 교수인덱스
 			      break;
@@ -151,17 +154,22 @@ public class TimeAlgorism extends JFrame {
 			      // 이전 과목의 기록 지움.
 			      temp = deleteSubInIdx(thissub, temp);
 
-			      //j가 이전과목 교수수를 넘어가면 더 이전과목으로 넘어감
 			      if (stored[before] + 1 <= professorCount[before] - 1) { // 이전의 저장된 인덱스 다음 인덱스가 존재하면
 			        i -= 2; // i - 1하면 다음 반복에 똑같음, i - 2 하면 다음 반복시 이전
 			        storedIdx = stored[before] + 1; // 이전의 다음인덱스부터 시작
-			        before--;
+			        recursive++;
 			        break;
+			      }
+			      else { // 존재하지 않으면
+			    	  before--;
+			    	  i--;
 			      }
 			    }
 			  }
 			  if (i == subjectCount - 1 && containsSubject) { // 마지막 과목까지 저장완료!
 			    list[scheduleListCount++] = temp;
+			    recursive = 0;
+			    System.out.println("시간표 "+scheduleListCount+"개 생성 완료!");
 			    temp = new ScheduleList();
 			    for (int k = 0; k < subjectCount - 1; k++) { // 이전 인덱스까지는 똑같이 저장하고 다음것부터 다시 탐색
 			      Subject thissub = subjectList[k][stored[k]];
@@ -196,6 +204,8 @@ public class TimeAlgorism extends JFrame {
 	}
 
 void toString(ScheduleList[] list) {
+	if(scheduleListCount == 0) System.out.println("가능한 시간표가.. 없다!");
+	System.out.println(scheduleListCount);
 	for(int k = 0; k < scheduleListCount; k++) {
 		for(int i = 0; i < 8; i++) {
 			for(int j = 0; j < 5; j++) {
@@ -209,18 +219,23 @@ void toString(ScheduleList[] list) {
 }
 
 void drawGUI(ScheduleList[] list) {
-	JFrame scheduleList = new JFrame();
+	JFrame timeWizard = new JFrame();
+	JPanel scheduleList = new JPanel();
 	scheduleList.setBackground(Color.BLACK);
-	scheduleList.getContentPane().setBackground(Color.BLACK);
+	JScrollPane scroll = new JScrollPane(scheduleList);
+	scroll.setBounds(0,0,160,160); 
+	scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+	scheduleList.setBackground(Color.BLACK);
 	scheduleList.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10)); //좌우간격, 상하간격
+	timeWizard.add(scroll);
 	for (int k = 0; k < scheduleListCount; k++) {
 		JPanel scheduleBoard = new JPanel();
 		scheduleBoard.setBackground(Color.white);
 		scheduleBoard.setLayout(new BorderLayout(10, 5));
 		
-		JLabel percentage = new JLabel("성공 확률: "+String.format("%.1f", list[k].totalCompetition * 100)+"%");
-		percentage.setHorizontalAlignment(JLabel.CENTER);
-		percentage.setFont(new Font("@AppleSDGothicNeoM00", Font.BOLD, 16));
+		//JLabel percentage = new JLabel("성공 확률: "+String.format("%.1f", list[k].totalCompetition * 100)+"%");
+		//percentage.setHorizontalAlignment(JLabel.CENTER);
+		//percentage.setFont(new Font("나눔고딕", Font.BOLD, 16));
 		JPanel schedule = new JPanel();
 		schedule.setBorder(new BevelBorder(BevelBorder.RAISED));
 		schedule.setSize(60,90);
@@ -229,19 +244,18 @@ void drawGUI(ScheduleList[] list) {
 		JLabel[][] label = new JLabel[9][6];
 		
 		scheduleBoard.add(schedule, BorderLayout.CENTER);
-		scheduleBoard.add(percentage, BorderLayout.SOUTH);
+		//scheduleBoard.add(percentage, BorderLayout.SOUTH);
 		scheduleList.add(scheduleBoard);
 		
 		for(int m = 0; m < 9; m++) {
-			   for(int n = 0; n < 6; n++) {
-				  label[m][n] = new JLabel();
-			      schedule.add(label[m][n]);
-			      schedule.setBackground(Color.WHITE); // 표 색깔
-			      label[m][n].setAlignmentX(CENTER_ALIGNMENT);
-			      label[m][n].setBorder(new EtchedBorder(EtchedBorder.RAISED));
-			      label[m][n].setFont(new Font("나눔고딕", Font.PLAIN, 16));
-			      // schedule.setFont(new Font("@AppleSDGothicNeoM00", Font.PLAIN, 16));
-			   }
+			for(int n = 0; n < 6; n++) {
+				label[m][n] = new JLabel();
+			    schedule.add(label[m][n]);
+			    schedule.setBackground(Color.WHITE); // 표 색깔
+			    label[m][n].setHorizontalAlignment(JLabel.CENTER);
+			    label[m][n].setBorder(new EtchedBorder(EtchedBorder.RAISED));
+			    label[m][n].setFont(new Font("나눔고딕", Font.BOLD, 16));
+			    }
 		}
 		label[0][1].setText("월");
 		label[0][2].setText("화");
@@ -254,13 +268,12 @@ void drawGUI(ScheduleList[] list) {
 			for(int j = 0; j < 5; j++) {
 				if(list[k].schedule[i][j] != null)
 					label[i+1][j+1].setText(convertToMultiline(list[k].schedule[i][j])); // 과목명/교수명 분리하여 출력
-					//label[i+1][j+1].setForeground(Color.ORANGE);
 		        }
 		}
 	}
-	scheduleList.setTitle("시간표 마법사");
-    scheduleList.setSize(1000, 750);
-    scheduleList.setVisible(true);
+	timeWizard.setTitle("시간표 마법사");
+	timeWizard.setSize(1000, 750);
+	timeWizard.setVisible(true);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 }
 public String convertToMultiline(String str)
